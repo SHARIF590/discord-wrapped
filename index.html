@@ -305,6 +305,80 @@ h2.sec-title{font-size:clamp(1.6rem,5vw,2.6rem);font-weight:800;text-align:cente
       box-shadow: 0 16px 32px -10px rgba(0, 0, 0, 0.6);
     }
 
+    
+    /* Glowing Next Chronicle Button & Interactive Story Progress Dots */
+    @keyframes nextMemoryPulse {
+      0%, 100% {
+        box-shadow: 0 0 16px rgba(244, 63, 94, 0.65), 0 0 32px rgba(168, 85, 247, 0.45), 0 4px 14px rgba(0, 0, 0, 0.5);
+        border-color: rgba(251, 113, 133, 0.85);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 28px rgba(244, 63, 94, 1), 0 0 55px rgba(168, 85, 247, 0.75), 0 0 20px rgba(255, 255, 255, 0.9);
+        border-color: rgba(255, 255, 255, 1);
+        transform: translateY(-2px) scale(1.03);
+      }
+    }
+
+    @keyframes bounceHorizontal {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(5px); }
+    }
+
+    @keyframes shimmerSwipe {
+      0% { transform: translateX(-120%) rotate(25deg); }
+      100% { transform: translateX(180%) rotate(25deg); }
+    }
+
+    .next-memory-glow-btn {
+      background: linear-gradient(135deg, #f43f5e 0%, #e11d48 45%, #8b5cf6 100%);
+      border: 1.5px solid rgba(255, 255, 255, 0.7);
+      animation: nextMemoryPulse 2s infinite ease-in-out;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .next-memory-glow-btn::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%; width: 200%; height: 200%;
+      background: linear-gradient(60deg, transparent 30%, rgba(255, 255, 255, 0.35) 50%, transparent 70%);
+      transform: rotate(25deg);
+      animation: shimmerSwipe 2.5s infinite linear;
+      pointer-events: none;
+    }
+
+    .next-memory-glow-btn:hover {
+      transform: scale(1.05);
+      filter: brightness(1.15);
+    }
+
+    .animate-bounce-x {
+      display: inline-block;
+      animation: bounceHorizontal 1s infinite ease-in-out;
+    }
+
+    .memory-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.25);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .memory-dot:hover {
+      background: rgba(255, 255, 255, 0.7);
+      transform: scale(1.3);
+    }
+
+    .memory-dot.active-dot {
+      width: 22px;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, #f43f5e, #ec4899);
+      box-shadow: 0 0 12px rgba(244, 63, 94, 0.9);
+    }
+
     .spotlight-bento.active-bento {
       border-color: rgba(244, 63, 94, 0.6);
       background: rgba(30, 20, 35, 0.7);
@@ -2049,7 +2123,12 @@ h2.sec-title{font-size:clamp(1.6rem,5vw,2.6rem);font-weight:800;text-align:cente
           <span id="hero-tag" class="text-xs font-extrabold px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 tracking-wider uppercase">
             TURNING POINT
           </span>
-          <span id="hero-date" class="text-xs font-mono text-slate-400">May 30, 2025 • 17:50</span>
+          <span id="hero-date" class="text-xs font-mono text-slate-400 hidden sm:inline">May 30, 2025 • 17:50</span>
+          
+          <!-- Chronicle Counter Badge -->
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-bold font-mono shadow-sm">
+            <span>📖 Chronicle <span id="hero-story-count">1</span> of 10</span>
+          </div>
         </div>
 
         <!-- Audio Player Simulation Bar -->
@@ -2121,29 +2200,48 @@ h2.sec-title{font-size:clamp(1.6rem,5vw,2.6rem);font-weight:800;text-align:cente
           </div>
         </div>
 
-        <!-- Stage Navigation Buttons -->
-        <div class="flex items-center gap-2 shrink-0">
-          <button onclick="prevMemory()" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        <!-- Stage Navigation Controller (Glowing Next & Interactive Dots) -->
+        <div class="flex flex-wrap sm:flex-nowrap items-center justify-between sm:justify-end gap-3 shrink-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-800/80">
+          
+          <!-- Previous Button -->
+          <button id="btnHeroPrev" onclick="prevMemory()" title="Previous Chronicle" class="p-3 rounded-2xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 text-slate-300 hover:text-white transition-all cursor-pointer shadow-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
           </button>
-          <button onclick="nextMemory()" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+
+          <!-- 10 Step Indicator Dots -->
+          <div id="hero-dots-container" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-950/90 border border-slate-800">
+            <!-- Rendered dynamically by JS -->
+          </div>
+
+          <!-- Glowing NEXT Chronicle Button -->
+          <button id="btnHeroNext" onclick="nextMemory()" class="next-memory-glow-btn flex items-center gap-3 px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm text-white shadow-2xl transition-all cursor-pointer">
+            <div class="flex flex-col text-left">
+              <span class="text-[10px] uppercase font-mono tracking-wider text-rose-200/90 flex items-center gap-1">
+                <span>Next Chronicle</span>
+                <span class="text-[9px] bg-white/25 px-1.5 py-0.2 rounded-full font-bold">Tap to read</span>
+              </span>
+              <span id="hero-next-title-preview" class="font-extrabold text-white line-clamp-1 max-w-[170px] sm:max-w-[240px]">02 The 2033 Candlelit Sanctuary</span>
+            </div>
+            <span class="text-lg font-black ml-1 animate-bounce-x">➔</span>
           </button>
+
         </div>
       </div>
     </div>
 
 
-    <!-- ==================== THE BENTO COLLECTOR GRID ==================== -->
-    <div class="mb-4 flex items-center justify-between">
-      <h3 class="text-sm font-bold text-slate-300 tracking-wider uppercase flex items-center gap-2">
-        <span>🗂️</span> The Complete Collector's Bento (Tap any card to view)
-      </h3>
-      <span class="text-xs text-slate-500 font-mono">10 Chronicles Preserved</span>
-    </div>
+    <!-- ==================== THE BENTO COLLECTOR GRID (HIDDEN AS REQUESTED) ==================== -->
+    <div id="collector-bento-section" class="hidden" style="display: none !important;">
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="text-sm font-bold text-slate-300 tracking-wider uppercase flex items-center gap-2">
+          <span>🗂️</span> The Complete Collector's Bento (Tap any card to view)
+        </h3>
+        <span class="text-xs text-slate-500 font-mono">10 Chronicles Preserved</span>
+      </div>
 
-    <div id="memory-bento" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <!-- Rendered dynamically by script -->
+      <div id="memory-bento" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Rendered dynamically by script -->
+      </div>
     </div>
 
   </div>
@@ -2250,26 +2348,93 @@ h2.sec-title{font-size:clamp(1.6rem,5vw,2.6rem);font-weight:800;text-align:cente
     let currentIndex = 0;
     let currentFilter = 'all';
 
+    // Initialize 10 Story Progress Dots
+    function initHeroDots() {
+      const container = document.getElementById('hero-dots-container');
+      if (!container) return;
+      container.innerHTML = '';
+      memories.forEach((m, idx) => {
+        const dot = document.createElement('div');
+        dot.className = `memory-dot ${idx === currentIndex ? 'active-dot' : ''}`;
+        dot.title = `Chronicle ${m.index}: ${m.title}`;
+        dot.onclick = () => setHero(idx);
+        container.appendChild(dot);
+      });
+    }
+
     // Set Hero Memory
     function setHero(index) {
       currentIndex = index;
       const m = memories[index];
+      const nextM = memories[(index + 1) % memories.length];
 
-      document.getElementById('hero-index').innerText = m.index;
-      document.getElementById('hero-tag').innerText = m.tag;
-      document.getElementById('hero-date').innerText = m.date;
-      document.getElementById('hero-audio').innerText = m.audio_label;
-      document.getElementById('hero-title').innerText = m.title;
-      document.getElementById('hero-bangla').innerText = m.bangla_title;
-      document.getElementById('hero-hook').innerText = `"${m.hook}"`;
-      document.getElementById('hero-speaker-a').innerText = m.speaker_a;
-      document.getElementById('hero-dialogue-a').innerText = `"${m.dialogue_a}"`;
-      document.getElementById('hero-speaker-b').innerText = m.speaker_b;
-      document.getElementById('hero-dialogue-b').innerText = `"${m.dialogue_b}"`;
-      document.getElementById('hero-takeaway').innerText = m.heart_takeaway;
+      const heroStage = document.getElementById('hero-stage');
+      if (heroStage) {
+        heroStage.style.transition = 'opacity 0.2s ease';
+        heroStage.style.opacity = '0.7';
+        setTimeout(() => { heroStage.style.opacity = '1'; }, 150);
+      }
 
-      // Update Active Bento Card
-      document.querySelectorAll('.spotlight-bento').forEach((b, idx) => {
+      const elIndex = document.getElementById('hero-index');
+      if (elIndex) elIndex.innerText = m.index;
+
+      const elTag = document.getElementById('hero-tag');
+      if (elTag) elTag.innerText = m.tag;
+
+      const elDate = document.getElementById('hero-date');
+      if (elDate) elDate.innerText = m.date;
+
+      const elAudio = document.getElementById('hero-audio');
+      if (elAudio) elAudio.innerText = m.audio_label;
+
+      const elTitle = document.getElementById('hero-title');
+      if (elTitle) elTitle.innerText = m.title;
+
+      const elBangla = document.getElementById('hero-bangla');
+      if (elBangla) elBangla.innerText = m.bangla_title;
+
+      const elHook = document.getElementById('hero-hook');
+      if (elHook) elHook.innerText = `"${m.hook}"`;
+
+      const elSpkA = document.getElementById('hero-speaker-a');
+      if (elSpkA) elSpkA.innerText = m.speaker_a;
+
+      const elDiaA = document.getElementById('hero-dialogue-a');
+      if (elDiaA) elDiaA.innerText = `"${m.dialogue_a}"`;
+
+      const elSpkB = document.getElementById('hero-speaker-b');
+      if (elSpkB) elSpkB.innerText = m.speaker_b;
+
+      const elDiaB = document.getElementById('hero-dialogue-b');
+      if (elDiaB) elDiaB.innerText = `"${m.dialogue_b}"`;
+
+      const elTakeaway = document.getElementById('hero-takeaway');
+      if (elTakeaway) elTakeaway.innerText = m.heart_takeaway;
+
+      const elStoryCount = document.getElementById('hero-story-count');
+      if (elStoryCount) elStoryCount.innerText = `${index + 1}`;
+
+      const elNextPreview = document.getElementById('hero-next-title-preview');
+      if (elNextPreview) {
+        if (index === memories.length - 1) {
+          elNextPreview.innerText = `01 ${memories[0].title} (Replay)`;
+        } else {
+          elNextPreview.innerText = `${nextM.index} ${nextM.title}`;
+        }
+      }
+
+      // Update 10 progress dots
+      const dots = document.querySelectorAll('.memory-dot');
+      dots.forEach((dot, idx) => {
+        if (idx === index) {
+          dot.classList.add('active-dot');
+        } else {
+          dot.classList.remove('active-dot');
+        }
+      });
+
+      // Update Active Bento Card (kept in sync even when hidden)
+      document.querySelectorAll('.spotlight-bento').forEach((b) => {
         if (b.dataset.id === m.id) {
           b.classList.add('active-bento');
         } else {
@@ -2368,9 +2533,11 @@ h2.sec-title{font-size:clamp(1.6rem,5vw,2.6rem);font-weight:800;text-align:cente
 
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
+      initHeroDots();
       setHero(0);
       renderBento('all');
     });
+    initHeroDots();
     setHero(0);
     renderBento('all');
   </script>
