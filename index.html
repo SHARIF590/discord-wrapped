@@ -3491,7 +3491,7 @@ const musicWidget = document.getElementById('musicWidget');
 const musicLabel = document.getElementById('musicLabel');
 const musicIcon = document.getElementById('musicIcon');
 
-const TARGET_VOLUME = 0.6; // 60% volume as requested
+const TARGET_VOLUME = 0.22; // Ambient background environment level (~20%)
 let musicStarted = false;
 let musicFadeInterval = null;
 
@@ -3499,7 +3499,7 @@ function updateMusicUI(isPlaying) {
   if (isPlaying) {
     if (musicWidget) musicWidget.classList.remove('music-paused');
     if (musicIcon) musicIcon.textContent = '🔊';
-    if (musicLabel) musicLabel.textContent = 'Soundtrack: 60%';
+    if (musicLabel) musicLabel.textContent = 'Ambient Music: 20%';
   } else {
     if (musicWidget) musicWidget.classList.add('music-paused');
     if (musicIcon) musicIcon.textContent = '🔇';
@@ -3520,7 +3520,7 @@ function startMusicFadeIn() {
       musicStarted = true;
       updateMusicUI(true);
       
-      // Slowly start: smoothly fade volume up to 60% (0.6) over 4 seconds
+      // Slowly start: smoothly fade volume up to ambient level (0.22) over 4 seconds
       const step = TARGET_VOLUME / 40; // 40 steps @ 100ms = 4000ms
       musicFadeInterval = setInterval(() => {
         if (bgAudio.paused) {
@@ -3585,7 +3585,7 @@ interactionEvents.forEach(evt => window.addEventListener(evt, onFirstUserGesture
 </div>
 
 
-<!-- Background Romantic Soundtrack Audio Element (Loop, 60% Volume, Smooth Fade-in) -->
+<!-- Background Romantic Soundtrack Audio Element (Loop, Soft Ambient Environment Volume, Smooth Fade-in) -->
 <audio id="bgMusic" src="bg_music.mp3" preload="auto" loop></audio>
 
 <!-- Floating Luxury Romantic Music Widget -->
@@ -3596,7 +3596,7 @@ interactionEvents.forEach(evt => window.addEventListener(evt, onFirstUserGesture
     <span class="music-bar w-0.5 bg-rose-300 rounded-full h-2 animate-music-bar-3"></span>
     <span class="music-bar w-0.5 bg-purple-400 rounded-full h-3 animate-music-bar-4"></span>
   </div>
-  <span id="musicLabel" class="font-mono text-[11px] text-rose-200 font-bold">Soundtrack: 60%</span>
+  <span id="musicLabel" class="font-mono text-[11px] text-rose-200 font-bold">Ambient Music: Soft</span>
   <span id="musicIcon" class="text-xs ml-0.5 transition-transform">🔊</span>
 </div>
 </body>
