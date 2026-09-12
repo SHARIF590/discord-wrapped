@@ -1230,6 +1230,26 @@ h2.sec-title{font-size:clamp(1.6rem,5vw,2.6rem);font-weight:800;text-align:cente
   }
 }
 
+
+/* ===== BACKGROUND MUSIC WIDGET & EQUALIZER ===== */
+@keyframes musicBar1 { 0%, 100% { height: 4px; } 50% { height: 12px; } }
+@keyframes musicBar2 { 0%, 100% { height: 14px; } 50% { height: 6px; } }
+@keyframes musicBar3 { 0%, 100% { height: 7px; } 50% { height: 14px; } }
+@keyframes musicBar4 { 0%, 100% { height: 12px; } 50% { height: 5px; } }
+
+.animate-music-bar-1 { animation: musicBar1 0.8s ease-in-out infinite; }
+.animate-music-bar-2 { animation: musicBar2 0.95s ease-in-out infinite; }
+.animate-music-bar-3 { animation: musicBar3 0.75s ease-in-out infinite; }
+.animate-music-bar-4 { animation: musicBar4 1.05s ease-in-out infinite; }
+
+.music-paused .music-bar {
+  animation-play-state: paused !important;
+  height: 3px !important;
+  opacity: 0.35;
+}
+.music-paused {
+  border-color: rgba(148, 163, 184, 0.25) !important;
+}
 </style>
 
 <script>
@@ -3464,6 +3484,95 @@ const dreamObserver = new IntersectionObserver((entries) => {
 }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
 dreamBeats.forEach(b => dreamObserver.observe(b));
 
+
+// ==================== BACKGROUND SOUNDTRACK CONTROLLER ====================
+const bgAudio = document.getElementById('bgMusic');
+const musicWidget = document.getElementById('musicWidget');
+const musicLabel = document.getElementById('musicLabel');
+const musicIcon = document.getElementById('musicIcon');
+
+const TARGET_VOLUME = 0.6; // 60% volume as requested
+let musicStarted = false;
+let musicFadeInterval = null;
+
+function updateMusicUI(isPlaying) {
+  if (isPlaying) {
+    if (musicWidget) musicWidget.classList.remove('music-paused');
+    if (musicIcon) musicIcon.textContent = '🔊';
+    if (musicLabel) musicLabel.textContent = 'Soundtrack: 60%';
+  } else {
+    if (musicWidget) musicWidget.classList.add('music-paused');
+    if (musicIcon) musicIcon.textContent = '🔇';
+    if (musicLabel) musicLabel.textContent = 'Soundtrack: Muted';
+  }
+}
+
+function startMusicFadeIn() {
+  if (!bgAudio) return;
+  if (musicFadeInterval) clearInterval(musicFadeInterval);
+  
+  bgAudio.loop = true;
+  bgAudio.volume = 0.0;
+  
+  const playPromise = bgAudio.play();
+  if (playPromise !== undefined) {
+    playPromise.then(() => {
+      musicStarted = true;
+      updateMusicUI(true);
+      
+      // Slowly start: smoothly fade volume up to 60% (0.6) over 4 seconds
+      const step = TARGET_VOLUME / 40; // 40 steps @ 100ms = 4000ms
+      musicFadeInterval = setInterval(() => {
+        if (bgAudio.paused) {
+          clearInterval(musicFadeInterval);
+          return;
+        }
+        if (bgAudio.volume + step < TARGET_VOLUME) {
+          bgAudio.volume = Math.min(TARGET_VOLUME, bgAudio.volume + step);
+        } else {
+          bgAudio.volume = TARGET_VOLUME;
+          clearInterval(musicFadeInterval);
+        }
+      }, 100);
+    }).catch(err => {
+      console.log('Autoplay waiting for user gesture:', err);
+      updateMusicUI(false);
+    });
+  }
+}
+
+function toggleMusic() {
+  if (!bgAudio) return;
+  if (bgAudio.paused) {
+    if (bgAudio.volume < 0.05) {
+      startMusicFadeIn();
+    } else {
+      bgAudio.volume = TARGET_VOLUME;
+      bgAudio.play().then(() => {
+        musicStarted = true;
+        updateMusicUI(true);
+      }).catch(console.error);
+    }
+  } else {
+    bgAudio.pause();
+    updateMusicUI(false);
+  }
+}
+
+// Attempt immediate playback on DOMContentLoaded
+window.addEventListener('DOMContentLoaded', () => {
+  startMusicFadeIn();
+});
+
+// If browser requires user interaction for autoplay, trigger on first interaction
+const interactionEvents = ['click', 'touchstart', 'scroll', 'keydown', 'pointerdown'];
+function onFirstUserGesture() {
+  if (!musicStarted && bgAudio && bgAudio.paused) {
+    startMusicFadeIn();
+  }
+  interactionEvents.forEach(evt => window.removeEventListener(evt, onFirstUserGesture, { capture: true }));
+}
+interactionEvents.forEach(evt => window.addEventListener(evt, onFirstUserGesture, { capture: true, passive: true }));
 </script>
 
 <!-- MANGA LIGHTBOX MODAL -->
@@ -3475,5 +3584,20 @@ dreamBeats.forEach(b => dreamObserver.observe(b));
   </div>
 </div>
 
+
+<!-- Background Romantic Soundtrack Audio Element (Loop, 60% Volume, Smooth Fade-in) -->
+<audio id="bgMusic" src="bg_music.mp3" preload="auto" loop></audio>
+
+<!-- Floating Luxury Romantic Music Widget -->
+<div id="musicWidget" class="fixed top-4 right-4 z-50 flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-slate-900/85 backdrop-blur-md border border-rose-500/40 shadow-2xl text-xs font-semibold text-slate-200 transition-all hover:scale-105 hover:border-rose-400 cursor-pointer select-none" onclick="toggleMusic()" title="Toggle Background Music">
+  <div id="musicEqualizer" class="flex items-end gap-0.5 h-3.5 pb-0.5">
+    <span class="music-bar w-0.5 bg-rose-400 rounded-full h-1.5 animate-music-bar-1"></span>
+    <span class="music-bar w-0.5 bg-pink-400 rounded-full h-3.5 animate-music-bar-2"></span>
+    <span class="music-bar w-0.5 bg-rose-300 rounded-full h-2 animate-music-bar-3"></span>
+    <span class="music-bar w-0.5 bg-purple-400 rounded-full h-3 animate-music-bar-4"></span>
+  </div>
+  <span id="musicLabel" class="font-mono text-[11px] text-rose-200 font-bold">Soundtrack: 60%</span>
+  <span id="musicIcon" class="text-xs ml-0.5 transition-transform">🔊</span>
+</div>
 </body>
 </html>
