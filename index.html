@@ -1263,6 +1263,22 @@ h2.sec-title{font-size:clamp(1.6rem,5vw,2.6rem);font-weight:800;text-align:cente
 <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Cinzel:wght@600;700;900&family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,800;1,400&family=Playfair+Display:ital,wght@0,600;0,900;1,400;1,600&display=swap" rel="stylesheet">
 </head>
 <body>
+<!-- Background Romantic Soundtrack Audio Element -->
+<audio id="bgMusic" src="bg_music.mp3" preload="auto" loop playsinline></audio>
+
+<!-- Floating Luxury Romantic Music Widget -->
+<div id="musicWidget" class="fixed top-4 right-4 z-50 flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-slate-900/90 backdrop-blur-md border border-rose-500/50 shadow-2xl text-xs font-semibold text-slate-200 transition-all hover:scale-105 hover:border-rose-400 cursor-pointer select-none" onclick="toggleMusic(event)" title="Toggle Ambient Music">
+  <div id="musicEqualizer" class="flex items-end gap-0.5 h-3.5 pb-0.5">
+    <span class="music-bar w-0.5 bg-rose-400 rounded-full h-1.5 animate-music-bar-1"></span>
+    <span class="music-bar w-0.5 bg-pink-400 rounded-full h-3.5 animate-music-bar-2"></span>
+    <span class="music-bar w-0.5 bg-rose-300 rounded-full h-2 animate-music-bar-3"></span>
+    <span class="music-bar w-0.5 bg-purple-400 rounded-full h-3 animate-music-bar-4"></span>
+  </div>
+  <span id="musicLabel" class="font-mono text-[11px] text-rose-200 font-bold">Ambient Music: Soft</span>
+  <span id="musicIcon" class="text-xs ml-0.5 transition-transform">🔊</span>
+</div>
+
+
 
 <div id="scroll-progress"></div>
 <canvas id="stars"></canvas>
@@ -3486,93 +3502,117 @@ dreamBeats.forEach(b => dreamObserver.observe(b));
 
 
 // ==================== BACKGROUND SOUNDTRACK CONTROLLER ====================
-const bgAudio = document.getElementById('bgMusic');
-const musicWidget = document.getElementById('musicWidget');
-const musicLabel = document.getElementById('musicLabel');
-const musicIcon = document.getElementById('musicIcon');
-
-const TARGET_VOLUME = 0.22; // Ambient background environment level (~20%)
+const TARGET_VOLUME = 0.30; // Soft ambient environment volume
 let musicStarted = false;
 let musicFadeInterval = null;
 
+function getBgAudio() {
+  let a = document.getElementById('bgMusic');
+  if (!a) {
+    a = document.createElement('audio');
+    a.id = 'bgMusic';
+    a.src = 'bg_music.mp3';
+    a.preload = 'auto';
+    a.loop = true;
+    a.setAttribute('playsinline', '');
+    document.body.appendChild(a);
+  }
+  return a;
+}
+
 function updateMusicUI(isPlaying) {
+  const widget = document.getElementById('musicWidget');
+  const label = document.getElementById('musicLabel');
+  const icon = document.getElementById('musicIcon');
   if (isPlaying) {
-    if (musicWidget) musicWidget.classList.remove('music-paused');
-    if (musicIcon) musicIcon.textContent = '🔊';
-    if (musicLabel) musicLabel.textContent = 'Ambient Music: 20%';
+    if (widget) widget.classList.remove('music-paused');
+    if (icon) icon.textContent = '🔊';
+    if (label) label.textContent = 'Ambient Music: 30%';
   } else {
-    if (musicWidget) musicWidget.classList.add('music-paused');
-    if (musicIcon) musicIcon.textContent = '🔇';
-    if (musicLabel) musicLabel.textContent = 'Soundtrack: Muted';
+    if (widget) widget.classList.add('music-paused');
+    if (icon) icon.textContent = '🔇';
+    if (label) label.textContent = 'Tap to Play Music';
   }
 }
 
 function startMusicFadeIn() {
-  if (!bgAudio) return;
+  const audio = getBgAudio();
+  if (!audio) return;
   if (musicFadeInterval) clearInterval(musicFadeInterval);
   
-  bgAudio.loop = true;
-  bgAudio.volume = 0.0;
+  audio.loop = true;
+  audio.volume = 0.0;
   
-  const playPromise = bgAudio.play();
+  const playPromise = audio.play();
   if (playPromise !== undefined) {
     playPromise.then(() => {
       musicStarted = true;
       updateMusicUI(true);
       
-      // Slowly start: smoothly fade volume up to ambient level (0.22) over 4 seconds
-      const step = TARGET_VOLUME / 40; // 40 steps @ 100ms = 4000ms
+      // Smooth fade-in up to TARGET_VOLUME over 3.5 seconds
+      const step = TARGET_VOLUME / 35; // 35 steps @ 100ms = 3500ms
       musicFadeInterval = setInterval(() => {
-        if (bgAudio.paused) {
+        if (audio.paused) {
           clearInterval(musicFadeInterval);
           return;
         }
-        if (bgAudio.volume + step < TARGET_VOLUME) {
-          bgAudio.volume = Math.min(TARGET_VOLUME, bgAudio.volume + step);
+        if (audio.volume + step < TARGET_VOLUME) {
+          audio.volume = Math.min(TARGET_VOLUME, audio.volume + step);
         } else {
-          bgAudio.volume = TARGET_VOLUME;
+          audio.volume = TARGET_VOLUME;
           clearInterval(musicFadeInterval);
         }
       }, 100);
     }).catch(err => {
-      console.log('Autoplay waiting for user gesture:', err);
+      console.log('Autoplay deferred until user gesture:', err);
       updateMusicUI(false);
     });
   }
 }
 
-function toggleMusic() {
-  if (!bgAudio) return;
-  if (bgAudio.paused) {
-    if (bgAudio.volume < 0.05) {
-      startMusicFadeIn();
-    } else {
-      bgAudio.volume = TARGET_VOLUME;
-      bgAudio.play().then(() => {
-        musicStarted = true;
+function toggleMusic(e) {
+  if (e) e.stopPropagation();
+  const audio = getBgAudio();
+  if (!audio) return;
+  if (audio.paused) {
+    audio.play().then(() => {
+      musicStarted = true;
+      if (audio.volume < 0.05) {
+        startMusicFadeIn();
+      } else {
+        audio.volume = TARGET_VOLUME;
         updateMusicUI(true);
-      }).catch(console.error);
-    }
+      }
+    }).catch(err => {
+      console.error('Play error on toggle:', err);
+    });
   } else {
-    bgAudio.pause();
+    audio.pause();
     updateMusicUI(false);
   }
 }
 
-// Attempt immediate playback on DOMContentLoaded
-window.addEventListener('DOMContentLoaded', () => {
+// Auto-start or listen for first interaction
+function initSoundtrack() {
   startMusicFadeIn();
-});
+}
 
-// If browser requires user interaction for autoplay, trigger on first interaction
-const interactionEvents = ['click', 'touchstart', 'scroll', 'keydown', 'pointerdown'];
-function onFirstUserGesture() {
-  if (!musicStarted && bgAudio && bgAudio.paused) {
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initSoundtrack);
+} else {
+  initSoundtrack();
+}
+
+// First user interaction anywhere plays the audio if autoplay was blocked
+const gestureEvents = ['click', 'touchstart', 'scroll', 'keydown', 'pointerdown'];
+function onUserGesture() {
+  const audio = getBgAudio();
+  if (!musicStarted && audio && audio.paused) {
     startMusicFadeIn();
   }
-  interactionEvents.forEach(evt => window.removeEventListener(evt, onFirstUserGesture, { capture: true }));
+  gestureEvents.forEach(evt => window.removeEventListener(evt, onUserGesture, { capture: true }));
 }
-interactionEvents.forEach(evt => window.addEventListener(evt, onFirstUserGesture, { capture: true, passive: true }));
+gestureEvents.forEach(evt => window.addEventListener(evt, onUserGesture, { capture: true, passive: true }));
 </script>
 
 <!-- MANGA LIGHTBOX MODAL -->
@@ -3585,19 +3625,5 @@ interactionEvents.forEach(evt => window.addEventListener(evt, onFirstUserGesture
 </div>
 
 
-<!-- Background Romantic Soundtrack Audio Element (Loop, Soft Ambient Environment Volume, Smooth Fade-in) -->
-<audio id="bgMusic" src="bg_music.mp3" preload="auto" loop></audio>
-
-<!-- Floating Luxury Romantic Music Widget -->
-<div id="musicWidget" class="fixed top-4 right-4 z-50 flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-slate-900/85 backdrop-blur-md border border-rose-500/40 shadow-2xl text-xs font-semibold text-slate-200 transition-all hover:scale-105 hover:border-rose-400 cursor-pointer select-none" onclick="toggleMusic()" title="Toggle Background Music">
-  <div id="musicEqualizer" class="flex items-end gap-0.5 h-3.5 pb-0.5">
-    <span class="music-bar w-0.5 bg-rose-400 rounded-full h-1.5 animate-music-bar-1"></span>
-    <span class="music-bar w-0.5 bg-pink-400 rounded-full h-3.5 animate-music-bar-2"></span>
-    <span class="music-bar w-0.5 bg-rose-300 rounded-full h-2 animate-music-bar-3"></span>
-    <span class="music-bar w-0.5 bg-purple-400 rounded-full h-3 animate-music-bar-4"></span>
-  </div>
-  <span id="musicLabel" class="font-mono text-[11px] text-rose-200 font-bold">Ambient Music: Soft</span>
-  <span id="musicIcon" class="text-xs ml-0.5 transition-transform">🔊</span>
-</div>
 </body>
 </html>
