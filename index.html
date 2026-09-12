@@ -1267,15 +1267,15 @@ h2.sec-title{font-size:clamp(1.6rem,5vw,2.6rem);font-weight:800;text-align:cente
 <audio id="bgMusic" src="bg_music.mp3" preload="auto" loop playsinline></audio>
 
 <!-- Floating Luxury Romantic Music Widget -->
-<div id="musicWidget" class="fixed top-4 right-4 z-50 flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-slate-900/90 backdrop-blur-md border border-rose-500/50 shadow-2xl text-xs font-semibold text-slate-200 transition-all hover:scale-105 hover:border-rose-400 cursor-pointer select-none" onclick="toggleMusic(event)" title="Toggle Ambient Music">
+<div id="musicWidget" class="fixed top-4 right-4 z-50 flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-slate-900/90 backdrop-blur-md border border-rose-500/50 shadow-2xl text-xs font-semibold text-slate-200 transition-all hover:scale-105 hover:border-rose-400 cursor-pointer select-none" onclick="toggleMusic(event)" title="Toggle Dreamy Music">
   <div id="musicEqualizer" class="flex items-end gap-0.5 h-3.5 pb-0.5">
     <span class="music-bar w-0.5 bg-rose-400 rounded-full h-1.5 animate-music-bar-1"></span>
     <span class="music-bar w-0.5 bg-pink-400 rounded-full h-3.5 animate-music-bar-2"></span>
     <span class="music-bar w-0.5 bg-rose-300 rounded-full h-2 animate-music-bar-3"></span>
     <span class="music-bar w-0.5 bg-purple-400 rounded-full h-3 animate-music-bar-4"></span>
   </div>
-  <span id="musicLabel" class="font-mono text-[11px] text-rose-200 font-bold">Ambient Music: Soft</span>
-  <span id="musicIcon" class="text-xs ml-0.5 transition-transform">🔊</span>
+  <span id="musicLabel" class="font-mono text-[11px] text-rose-200 font-bold">Dreamy Soundtrack: 25%</span>
+  <span id="musicIcon" class="text-xs ml-0.5 transition-transform">✨</span>
 </div>
 
 
@@ -3546,7 +3546,7 @@ dreamBeats.forEach(b => dreamObserver.observe(b));
 
 
 // ==================== BACKGROUND SOUNDTRACK CONTROLLER ====================
-const TARGET_VOLUME = 0.30; // Soft ambient environment volume
+const TARGET_VOLUME = 0.25; // Soft dreamy ambient environment volume
 let musicStarted = false;
 let musicFadeInterval = null;
 
@@ -3570,12 +3570,12 @@ function updateMusicUI(isPlaying) {
   const icon = document.getElementById('musicIcon');
   if (isPlaying) {
     if (widget) widget.classList.remove('music-paused');
-    if (icon) icon.textContent = '🔊';
-    if (label) label.textContent = 'Ambient Music: 30%';
+    if (icon) icon.textContent = '✨';
+    if (label) label.textContent = 'Dreamy Soundtrack: 25%';
   } else {
     if (widget) widget.classList.add('music-paused');
     if (icon) icon.textContent = '🔇';
-    if (label) label.textContent = 'Tap to Play Music';
+    if (label) label.textContent = 'Tap for Dreamy Music';
   }
 }
 
